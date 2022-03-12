@@ -2,7 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use Carbon\Carbon;
+use App\Models\Todo;
 use Illuminate\Http\Request;
+use JamesMills\LaravelTimezone\Timezone;
+use Stevebauman\Location\Facades\Location;
+use Illuminate\Validation\ValidationException;
 
 class TodoController extends Controller
 {
@@ -11,9 +17,15 @@ class TodoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view('todo.index');
+      
+         $ip = $request->ip(); 
+         $ip = '162.159.24.227'; /* Static IP address */
+         $currentUserInfo = Location::get($ip);
+//dd($currentUserInfo);
+        $todos = Todo::all();
+        return view('todo', compact('todos','currentUserInfo'));
     }
 
     /**
@@ -23,7 +35,7 @@ class TodoController extends Controller
      */
     public function create()
     {
-        //
+        return view('create');
     }
 
     /**
@@ -34,7 +46,42 @@ class TodoController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        try {
+        $this->validate(request(), [
+            'name' => ['required'],
+            'date' => ['required','date'],
+            'time' => ['required'],
+
+        ]);
+    } catch (ValidationException $e) {
+        session()->flash('error', $e->getMessage());
+        return redirect()->back();
+    }
+
+
+
+        $data = request()->all();
+
+        try {
+            $date = Carbon::parse($request->date)->format('Y-m-d');
+            $todo = new Todo();
+            //On the left is the field name in DB and on the right is field name in Form/view
+            $todo->title = $data['name'];
+            $todo->description = $data['description'];
+            $todo->date = $date;
+            $todo->time = $data['time'];
+            $todo->status = "To Do";
+
+            $todo->save();
+
+            session()->flash('success', 'Todo created succesfully');
+
+            return redirect('/');
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+        return redirect()->back();
+        }
     }
 
     /**
@@ -45,7 +92,7 @@ class TodoController extends Controller
      */
     public function show($id)
     {
-        //
+        return view('details');
     }
 
     /**
@@ -56,7 +103,7 @@ class TodoController extends Controller
      */
     public function edit($id)
     {
-        //
+        return view('edit');
     }
 
     /**

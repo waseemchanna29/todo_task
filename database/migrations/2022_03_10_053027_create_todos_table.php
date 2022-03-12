@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->time('time');
             $table->date('date');
-            $table->tinyInteger('status');
+            $table->string('status');
             $table->timestamps();
         });
     }
